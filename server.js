@@ -1,20 +1,45 @@
 const express = require('express');
 const path = require('path');
 const hbs = require('express-handlebars');
-
+const multer = require('multer');
 const app = express();
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, './public/uploads');
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.originalname);
+  }
+});
+const upload = multer({ storage: storage });
 
 app.engine('hbs', hbs());
 app.set('view engine', 'hbs');
 
 app.use(express.static(path.join(__dirname, '/public')));
+app.use(express.urlencoded({ extended: false }));
+
+app.post('/contact/send-message', upload.single('projectDesign'), (req, res) => {
+
+  const { author, sender, title, message } = req.body;
+  const projectDesign = req.file;
+
+  if (author && sender && title && message && projectDesign) {
+    res.render('contact', { filePath: '/uploads/' + projectDesign.originalname, isSent: true });
+  }
+  else {
+    res.render('contact', { isError: true });
+  }
+
+});
 
 app.get('/', (req, res) => {
   res.render('index');
 });
 
 app.get('/about', (req, res) => {
-  res.render('about', {layout: "dark" });
+  res.render('about', { layout: "dark" });
 });
 
 app.get('/contact', (req, res) => {
@@ -30,7 +55,7 @@ app.get('/history', (req, res) => {
 });
 
 app.get('/hello/:name', (req, res) => {
-  res.render('hello', {name: req.params.name});
+  res.render('hello', { name: req.params.name });
 });
 
 
